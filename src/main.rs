@@ -337,8 +337,8 @@ async fn connect(
 #[tokio::main]
 async fn main() {
     let env = Env::default()
-        .filter_or("MY_LOG_LEVEL", "debug")
-        .write_style_or("MY_LOG_STYLE", "always");
+        .filter_or("LOG_LEVEL", "info")
+        .write_style_or("LOG_STYLE", "always");
 
     env_logger::init_from_env(env);
 
