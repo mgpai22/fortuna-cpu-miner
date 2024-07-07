@@ -33,6 +33,7 @@ struct StratumMessage {
 #[derive(Serialize, Debug)]
 struct FoundAnswerResponse {
     job_id: String,
+    extra_nonce: Vec<u8>,
     nonce: Vec<u8>,
     answer: Vec<u8>,
     difficulty: u128,
@@ -336,7 +337,7 @@ async fn connect(
 #[tokio::main]
 async fn main() {
     let env = Env::default()
-        .filter_or("MY_LOG_LEVEL", "info")
+        .filter_or("MY_LOG_LEVEL", "debug")
         .write_style_or("MY_LOG_STYLE", "always");
 
     env_logger::init_from_env(env);
@@ -510,6 +511,12 @@ async fn main() {
         match rx.try_recv() {
             Ok(answer) => {
                 info!("Found a solution!: {:?}", &answer.zeroes);
+                debug!("Hash: {}", hex::encode(&answer.answer));
+                debug!("Nonce: {}", hex::encode(&answer.nonce));
+                debug!(
+                    "Full Nonce: {}",
+                    hex::encode(&answer.extra_nonce) + &*hex::encode(&answer.nonce)
+                );
                 let submit_msg = StratumMessage {
                     id: Some(serde_json::Value::from(3)),
                     method: Some("mining.submit".to_string()),
@@ -685,6 +692,7 @@ fn worker(
         {
             tx.send(FoundAnswerResponse {
                 job_id: job_id.to_string(),
+                extra_nonce: extra_nonce_1_bytes.clone(),
                 nonce: bytes
                     [4 + extra_nonce_1_length..4 + extra_nonce_1_length + extra_nonce_2_bytes_size]
                     .to_vec(),
