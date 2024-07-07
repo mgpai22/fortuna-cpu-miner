@@ -14,7 +14,7 @@ PASS=x
 #################################
 
 while true; do
-    ./fortuna-miner --pool $POOL --user $USER --pass $PASS --threads $THREADS $@
+    ./fortuna-cpu-miner --pool $POOL --user $USER --pass $PASS --threads $THREADS $@
 
     if [ $? -ne 0 ]; then
         echo "Program exited with an error. Waiting for 10 seconds before restarting..."
