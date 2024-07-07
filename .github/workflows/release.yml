@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: fortuna-cpu-miner
+            asset_name: fortuna-cpu-miner-linux-amd64
+            script_name: mine.sh
+          - os: windows-latest
+            artifact_name: fortuna-cpu-miner.exe
+            asset_name: fortuna-cpu-miner-windows-amd64
+            script_name: mine.bat
+          - os: macos-latest
+            artifact_name: fortuna-cpu-miner
+            asset_name: fortuna-cpu-miner-macos-amd64
+            script_name: mine.sh
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+      - name: Build
+        run: cargo build --release
+      - name: Prepare release package
+        shell: bash
+        run: |
+          mkdir release_package
+          cp target/release/${{ matrix.artifact_name }} release_package/
+          cp ${{ matrix.script_name }} release_package/
+      - name: Zip release package (Windows)
+        if: matrix.os == 'windows-latest'
+        run: Compress-Archive -Path release_package\* -DestinationPath ${{ matrix.asset_name }}.zip
+      - name: Zip release package (Unix)
+        if: matrix.os != 'windows-latest'
+        run: zip -j ${{ matrix.asset_name }}.zip release_package/*
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: ./${{ matrix.asset_name }}.zip
+          asset_name: ${{ matrix.asset_name }}.zip
+          asset_content_type: application/zip
+
+  create_release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
