@@ -8,6 +8,7 @@ pool designed for fortuna atm.
 - Download the [latest release](https://github.com/mgpai22/fortuna-cpu-miner/releases/) for your platform
 - Unzip downloaded folder
 - Edit mine.sh or mine.bat depending on your platform
+- run: `./mine.sh`
 
 ## Mine Script Instructions
 
